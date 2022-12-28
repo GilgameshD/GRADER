@@ -2,7 +2,7 @@
 Author: Wenhao Ding
 Email: wenhaod@andrew.cmu.edu
 Date: 2021-12-21 11:57:44
-LastEditTime: 2022-12-27 22:31:07
+LastEditTime: 2022-12-28 13:31:19
 Description: 
 '''
 
@@ -72,9 +72,7 @@ class WorldModel(object):
             self.model_name = 'gnn'
             self.use_full = True
 
-        self.use_anti = False
         random = False
-
         if self.model_name == 'mlp':
             input_dim = self.state_dim - self.goal_dim + self.action_dim
             output_dim = self.state_dim - self.goal_dim
@@ -169,7 +167,7 @@ class WorldModel(object):
 
         adj = np.array(adj)[None, None, :, :].repeat(batch_size, axis=0)
         adj = CUDA(torch.from_numpy(adj.astype(np.float32)))
-        return x, adj, None, None
+        return x, adj
 
     def organize_nodes_chemistry(self, x):
         # x - [B, node_num, node_dim], the nodes of next_state are in the end
@@ -238,18 +236,10 @@ class WorldModel(object):
                     delta = self.model(datas)
                     loss = self.criterion(delta, labels)
                 else:
-                    x, adj, adj_anti, label_anti = self.build_node_and_edge(datas)
+                    x, adj = self.build_node_and_edge(datas)
                     x = self.model(x, adj)
                     delta = self.organize_nodes(x)
-                    loss_causal = self.criterion(delta, labels)
-                    
-                    if self.use_anti:
-                        x_anti = self.model(x, adj_anti)
-                        delta_anti = self.organize_nodes(x_anti)
-                        loss_anti_causal = self.criterion(delta_anti, label_anti)
-                        loss = loss_causal + loss_anti_causal
-                    else:
-                        loss = loss_causal
+                    loss = self.criterion(delta, labels)
                 loss.backward()
                 self.optimizer.step()
 
@@ -273,18 +263,11 @@ class WorldModel(object):
                 delta = self.model(datas)
                 loss = self.criterion(delta, labels)
             else:
-                x, adj, adj_anti, label_anti = self.build_node_and_edge(datas)
+                x, adj = self.build_node_and_edge(datas)
                 x = self.model(x, adj)
                 delta = self.organize_nodes(x)
-                loss_causal = self.criterion(delta, labels)
-                
-                if self.use_anti:
-                    x_anti = self.model(x, adj_anti)
-                    delta_anti = self.organize_nodes(x_anti)
-                    loss_anti_causal = self.criterion(delta_anti, label_anti)
-                    loss = loss_causal + loss_anti_causal
-                else:
-                    loss = loss_causal
+                loss = self.criterion(delta, labels)
+
             loss_list.append(loss.item())
         self.model.train()
         return np.mean(loss_list)
@@ -303,7 +286,7 @@ class WorldModel(object):
             if self.use_mlp:
                 delta = self.model(inputs)
             else:
-                x, adj, _, _ = self.build_node_and_edge(inputs)
+                x, adj = self.build_node_and_edge(inputs)
                 x = self.model(x, adj)
                 delta = self.organize_nodes(x)
 
