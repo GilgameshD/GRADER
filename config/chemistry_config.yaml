@@ -1,0 +1,46 @@
+############# model parameters #############
+GRADER:
+    env_name: 'chemistry'
+    log_dir: ./log/test
+    model_path: './model'
+    model_id: 1
+    planner:
+        epsilon: 0.4
+        max_buffer_size: 4000
+        pretrain_buffer_size: 50
+        validation_flag: True
+        validation_freq: 1      # the frequency of validation
+        validation_ratio: 0.3   # ratio of validation set
+        lr: 0.001
+        n_epochs: 20         
+        hidden_dim: 1           # hidden layer number
+        hidden_size: 64         # hidden layer size
+        batch_size: 256
+        scale: 1                # normalizing scale for NN input and output, determined by envs
+        mpc:
+            type: 'Random'
+            horizon: 5          # should be consistent with the max step
+            popsize: 700        # how many random samples for mpc
+            gamma: 1            # reward discount coefficient
+            max_iters: 5
+            num_elites: 10
+    discover:
+        discovery_interval: 10
+
+
+############# baseline parameters #############
+
+SAC:
+    lr: 0.001
+    tau: 0.005
+    update_iteration: 3
+    gamma: 0.99
+    alpha: 0.2
+    max_buffer_size: 4000
+    pretrain_buffer_size: 50
+    hidden_dim: 64
+    batch_size: 256
+    model_path: './model'
+    model_id: 1
+    min_Val: 1.0e-7
+
