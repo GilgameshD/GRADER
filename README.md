@@ -2,7 +2,7 @@
  * @Author: Wenhao Ding
  * @Email: wenhaod@andrew.cmu.edu
  * @Date: 2021-12-21 11:57:44
- * @LastEditTime: 2022-12-28 13:04:26
+ * @LastEditTime: 2022-12-28 13:09:51
  * @Description: 
 -->
 # Generating-by-Discovering (GRADER)
@@ -16,8 +16,8 @@ The code is tested with Ubuntu 20.04 and Python 3.8.
 
 ```bash
 # clone the code
-git clone https://github.com/GilgameshD/grader.git
-cd grader
+git clone https://github.com/GilgameshD/GRADER.git
+cd GRADER
 
 # create conda environment
 conda create -n grader python=3.8
