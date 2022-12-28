@@ -2,16 +2,13 @@
 Author: Wenhao Ding
 Email: wenhaod@andrew.cmu.edu
 Date: 2021-12-21 11:57:44
-LastEditTime: 2022-12-28 12:41:32
+LastEditTime: 2022-12-28 13:34:34
 Description: 
 '''
-
-import math
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import TransformerEncoder, TransformerEncoderLayer
 
 
 class MLP(nn.Module):
@@ -36,88 +33,7 @@ class MLP(nn.Module):
             out = self.dropout(out)
             out = self.relu(out)
         out = self.fc_out(out)
-        #out = self.sigmoid(out)
         return out
-
-
-class PETS(nn.Module):
-    def __init__(self, n_net=5, n_input=7, n_output=6, n_h=1, size_h=128, dropout_p=0.0):
-        super(MLP, self).__init__()
-        self.n_input = n_input
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(p=dropout_p)
-
-        self.fc_list = nn.ModuleList()
-        for i in range(n_net):
-            one_model = nn.Sequential([
-                nn.Linear(n_input, size_h),
-                nn.ReLU(),
-                nn.Linear(size_h, size_h),
-                nn.ReLU(),
-                nn.Linear(size_h, size_h),
-                nn.ReLU(),
-                nn.Linear(size_h, n_output),
-            ])
-            self.fc_list.append(one_model)
-
-    def forward(self, x):
-        x = x.view(-1, self.n_input)
-        out_list = []
-        for model in self.fc_list:
-            out_i = model(x)[None]
-            out_list.append(out_i)
-        
-        out_list = torch.cat(out_list, dim=0)
-        out = torch.mean(out_list, dim=0)
-        return out
-
-
-class Transformer(nn.Module):
-    def __init__(self, d_model, nhead, d_hid, nlayers, dropout=0.1):
-        super().__init__()
-        self.pos_encoder = PositionalEncoding(d_model, dropout)
-        encoder_layers = TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=d_hid, dropout=dropout, batch_first=False)
-        self.transformer_encoder = TransformerEncoder(encoder_layers, nlayers)
-
-    def forward(self, src, adj):
-        """
-        Args:
-            src: Tensor, shape [batch_size, seq_len, d_model]
-            adj: useless
-        Returns:
-            output Tensor of shape [batch_size, seq_len, d_model]
-        """
-        # convert the batch dim to the second dim
-        src = torch.transpose(src, 1, 0)
-        output = self.transformer_encoder(src, None)
-
-        # conver the dim back
-        output = torch.transpose(output, 1, 0)
-        return output
-
-
-class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, dropout=0.1, max_len=100):
-        super().__init__()
-        self.d_model = d_model
-        self.dropout = nn.Dropout(p=dropout)
-
-        position = torch.arange(max_len).unsqueeze(1)
-        div_term_1 = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
-        div_term_2 = torch.exp(torch.arange(1, d_model, 2) * (-math.log(10000.0) / d_model))
-        pe = torch.zeros(max_len, 1, d_model)
-        pe[:, 0, 0::2] = torch.sin(position * div_term_1)
-        pe[:, 0, 1::2] = torch.cos(position * div_term_2)
-        self.register_buffer('pe', pe)
-
-    def forward(self, x):
-        """
-        Args:
-            x: Tensor, shape [seq_len, batch_size, embedding_dim]
-        """
-        x = x * math.sqrt(self.d_model)
-        x = x + self.pe[:x.size(0)]
-        return self.dropout(x)
 
 
 class IndividualEmbedding(nn.Module):
